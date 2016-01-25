@@ -399,16 +399,16 @@ The following constructors are defined for **Matrix4** only.
 
 ``new_rotate_euler(heading, attitude, bank)``
     Create a **Matrix4** for the given Euler rotation.  *heading* is a rotation
-    around the Y axis, *attitude* around the X axis and *bank* around the Z
+    around the X axis, *attitude* around the Y axis and *bank* around the Z
     axis.  All rotations are performed simultaneously, so this method avoids
     "gimbal lock" and is the usual method for implemented 3D rotations in a
     game.  Example::
 
         >>> m = Matrix4.new_rotate_euler(math.pi / 2, math.pi / 2, 0.0)
         >>> m
-        Matrix4([    0.00    -0.00     1.00     0.00
-                     1.00     0.00    -0.00     0.00
-                    -0.00     1.00     0.00     0.00
+        Matrix4([    0.00     1.00     0.00     0.00
+                     0.00     0.00    -1.00     0.00
+                    -1.00     0.00     0.00     0.00
                      0.00     0.00     0.00     1.00])
 
 ``new_perspective(fov_y, aspect, near, far)``
@@ -561,12 +561,12 @@ Rotations can be formed using the constructors:
 
 ``new_rotate_euler(heading, attitude, bank)``
     Equivalent to the Matrix4 constructor of the same name.  *heading*
-    is a rotation around the Y axis, *attitude* around the X axis and
+    is a rotation around the X axis, *attitude* around the Y axis and
     *bank* around the Z axis.  All angles are given in radians.  Example::
 
         >>> q = Quaternion.new_rotate_euler(math.pi / 2, math.pi / 2, 0)
         >>> q
-        Quaternion(real=0.50, imag=<0.50, 0.50, 0.50>)
+        Quaternion(real=0.50, imag=<0.50, 0.50, -0.50>)
 
 ``new_interpolate(q1, q2, t)``
     Create a quaternion which gives a (SLERP) interpolated rotation

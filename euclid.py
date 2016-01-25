@@ -1130,24 +1130,22 @@ class Matrix4:
     new_rotate_axis = classmethod(new_rotate_axis)
 
     def new_rotate_euler(cls, heading, attitude, bank):
-        # from http://www.euclideanspace.com/
-        ch = math.cos(heading)
-        sh = math.sin(heading)
-        ca = math.cos(attitude)
-        sa = math.sin(attitude)
-        cb = math.cos(bank)
-        sb = math.sin(bank)
+        # from http://www.lfd.uci.edu/~gohlke/code/transformations.py
+        si, sj, sk = math.sin(heading), math.sin(attitude), math.sin(bank)
+        ci, cj, ck = math.cos(heading), math.cos(attitude), math.cos(bank)
+        cc, cs = ci*ck, ci*sk
+        sc, ss = si*ck, si*sk
 
         self = cls()
-        self.a = ch * ca
-        self.b = sh * sb - ch * sa * cb
-        self.c = ch * sa * sb + sh * cb
-        self.e = sa
-        self.f = ca * cb
-        self.g = -ca * sb
-        self.i = -sh * ca
-        self.j = sh * sa * cb + ch * sb
-        self.k = -sh * sa * sb + ch * cb
+        self.a = cj*ck
+        self.b = sj*sc-cs
+        self.c = sj*cc+ss
+        self.e = cj*sk
+        self.f = sj*ss+cc
+        self.g = sj*cs-sc
+        self.i = -sj
+        self.j = cj*si
+        self.k = cj*ci
         return self
     new_rotate_euler = classmethod(new_rotate_euler)
 
@@ -1272,7 +1270,18 @@ class Matrix4:
 
         return Quaternion(w, x, y, z)
 
-        
+    def get_euler(self):
+        # from http://www.lfd.uci.edu/~gohlke/code/transformations.py
+        cy = math.sqrt(self.a*self.a + self.e*self.e)
+        if cy > 0.00000001:
+            heading = math.atan2(self.j, self.k)
+            attitude = math.atan2(-self.i, cy)
+            bank = math.atan2( self.e, self.a)
+        else:
+            heading = math.atan2(-self.g, self.f)
+            attitude = math.atan2(-self.i, cy)
+            bank = 0.0
+        return heading, attitude, bank
 
 class Quaternion:
     # All methods and naming conventions based off 
@@ -1441,25 +1450,7 @@ class Quaternion:
             return angle, Vector3(self.x / s, self.y / s, self.z / s)
 
     def get_euler(self):
-        t = self.x * self.y + self.z * self.w
-        if t > 0.4999:
-            heading = 2 * math.atan2(self.x, self.w)
-            attitude = math.pi / 2
-            bank = 0
-        elif t < -0.4999:
-            heading = -2 * math.atan2(self.x, self.w)
-            attitude = -math.pi / 2
-            bank = 0
-        else:
-            sqx = self.x ** 2
-            sqy = self.y ** 2
-            sqz = self.z ** 2
-            heading = math.atan2(2 * self.y * self.w - 2 * self.x * self.z,
-                                 1 - 2 * sqy - 2 * sqz)
-            attitude = math.asin(2 * t)
-            bank = math.atan2(2 * self.x * self.w - 2 * self.y * self.z,
-                              1 - 2 * sqx - 2 * sqz)
-        return heading, attitude, bank
+        return self.get_matrix().get_euler()
 
     def get_matrix(self):
         xx = self.x ** 2
@@ -1501,18 +1492,25 @@ class Quaternion:
     new_rotate_axis = classmethod(new_rotate_axis)
 
     def new_rotate_euler(cls, heading, attitude, bank):
+        # from http://www.lfd.uci.edu/~gohlke/code/transformations.py
+        heading /= 2.0
+        attitude /= 2.0
+        bank /= 2.0
+        ci = math.cos(heading)
+        si = math.sin(heading)
+        cj = math.cos(attitude)
+        sj = math.sin(attitude)
+        ck = math.cos(bank)
+        sk = math.sin(bank)
+        cc = ci*ck
+        cs = ci*sk
+        sc = si*ck
+        ss = si*sk
         Q = cls()
-        c1 = math.cos(heading / 2)
-        s1 = math.sin(heading / 2)
-        c2 = math.cos(attitude / 2)
-        s2 = math.sin(attitude / 2)
-        c3 = math.cos(bank / 2)
-        s3 = math.sin(bank / 2)
-
-        Q.w = c1 * c2 * c3 - s1 * s2 * s3
-        Q.x = s1 * s2 * c3 + c1 * c2 * s3
-        Q.y = s1 * c2 * c3 + c1 * s2 * s3
-        Q.z = c1 * s2 * c3 - s1 * c2 * s3
+        Q.w = cj*cc + sj*ss
+        Q.x = cj*sc - sj*cs
+        Q.y = cj*ss + sj*cc
+        Q.z = cj*cs - sj*sc
         return Q
     new_rotate_euler = classmethod(new_rotate_euler)
     
